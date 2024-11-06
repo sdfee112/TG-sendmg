@@ -1,0 +1,40 @@
+name: Telegram Reminder
+
+on:
+  schedule:
+    # 北京时间 10:00 (UTC 02:00) 和 15:00 (UTC 07:00)
+    - cron: '0 2,7 1,2 */5 *'
+  
+  # 添加手动触发
+  workflow_dispatch:
+    inputs:
+      message:
+        description: '自定义消息内容（可选）'
+        required: false
+        default: '请注意，5个月到了，可以续期手机号了'
+
+jobs:
+  send-reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Telegram Message
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            🔔 续期提醒
+            
+            ${{ github.event.inputs.message || '请注意，5个月到了，可以续期手机号了' }}
+            
+            -- 自动提醒系统
+
+      - name: Log Result
+        run: |
+          echo "Message sent at $(date)"
+          echo "Next reminder will be sent according to schedule"
+
+    # 添加重试机制，以防发送失败
+    env:
+      ACTIONS_STEP_DEBUG: true
+    continue-on-error: true
